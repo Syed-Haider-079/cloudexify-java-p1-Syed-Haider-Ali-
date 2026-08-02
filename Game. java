@@ -1,0 +1,101 @@
+*
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
+ */
+package com.mycompany.cloudexify.project1;
+
+import java.util.Random;
+import java.io.*;
+
+public class Game {
+    public int secretNumber;
+    public int attempts;
+    public int bestScore;
+    public int range;
+    public int maxAttempts;
+    public int previousGuess;
+    public Random rand;
+    public final String SCORE_FILE = "bestscore.txt";
+
+    public Game() {
+        rand = new Random();
+        loadBestScore();
+    }
+
+    public void startNewGame(String difficulty) {
+        if (difficulty.contains("Easy")) {
+            range = 50;
+            maxAttempts = 10;
+        } else {
+            range = 200;
+            maxAttempts = 15;
+        }
+        secretNumber = rand.nextInt(range) + 1;
+        attempts = 0;
+        previousGuess = -1;
+    }
+
+    public String processUserGuess(int guess) {
+        attempts++;
+        String feedback = "";
+
+        if (guess < secretNumber) {
+            feedback = "Too LOW!";
+        } else if (guess > secretNumber) {
+            feedback = "Too HIGH!";
+        } else {
+            return "CORRECT";
+        }
+
+        if (previousGuess != -1) {
+            int currentDiff = Math.abs(secretNumber - guess);
+            int prevDiff = Math.abs(secretNumber - previousGuess);
+            if (currentDiff < prevDiff) {
+                feedback += " (Getting warmer!)";
+            } else {
+                feedback += " (Getting colder!)";
+            }
+        }
+        
+        previousGuess = guess;
+        return feedback;
+    }
+
+    public boolean checkAndUpdateBestScore() {
+        if (attempts < bestScore) {
+            bestScore = attempts;
+            saveBestScore();
+            return true;
+        }
+        return false;
+    }
+
+    public void loadBestScore() {
+        try (BufferedReader r = new BufferedReader(new FileReader(SCORE_FILE))) {
+            String line = r.readLine();
+            if (line != null) {
+                bestScore = Integer.parseInt(line.trim());
+            } else {
+                bestScore = Integer.MAX_VALUE;
+            }
+        } catch (IOException | NumberFormatException e) {
+            bestScore = Integer.MAX_VALUE;
+        }
+    }
+
+    public void saveBestScore() {
+        try (FileWriter w = new FileWriter(SCORE_FILE)) {
+            w.write(String.valueOf(attempts));
+        } catch (IOException e) {
+            System.out.println("Error saving score!");
+        }
+    }
+
+    public void resetBestScoreRecord() {
+        bestScore = Integer.MAX_VALUE;
+        File f = new File(SCORE_FILE);
+        if (f.exists()) {
+            f.delete();
+        }
+    }
+}
